@@ -28,6 +28,18 @@ year2023_col <- "#03254c"
 theme_set(theme_minimal())
 ```
 
+
+## Problem 1. 
+
+**[A]** In part one of the results section, they tested for correlation between distance from headwater (km) and annual total nitrogen load (kg year-1) likely by using a Pearson correlation test, providing a p-value of 0.03. In part two of the results section they tested whether the average nitrogen load (kg year-1) was different between five sources with a one-way ANOVA test.
+
+
+**[B]** The ANOVA test in part two includes a p-value of 0.02 and conclusion that there is no difference in means among the 5 sources. However to provide more context for the results they could also include a Cohen's d test to note the effect sizes, and individual group means with their standard errors. While the test concluded there is no significant difference among group means, the small p-value suggests that something is different. Including the effect sizes will tell the reader how different the relationships actually are and its relevance in a real world context i.e. urban land may be higher than grasslands. Providing the group means with standard errors will display how the sample means will vary and help to explain the lack of difference between means by accounting for precision.
+
+
+
+
+
 ## Problem 2. Data visualization
 
 **[A]**
@@ -66,7 +78,7 @@ ggplot(data = sst_clean,
   geom_line() +
   # labels
   labs(x = "Month",
-       y = "Mean monthly sea surface temperature",
+       y = "Mean monthly sea surface temperature °C",
        color = "Year") +
   scale_color_manual(values = c(
     "2018" = year2018_col,
@@ -79,8 +91,16 @@ ggplot(data = sst_clean,
   
   theme_minimal() +
   theme(
+    axis.title = element_text(size = 12),
     panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank())
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white", color = "black"),
+    
+    # Move legend inside the plot
+    legend.position = c(0.1, 0.7),  # adjust as needed
+    legend.title = element_text(size = 11, face = "bold"),
+    legend.text = element_text(size = 10)
+  )
 
 ```
 
