@@ -15,29 +15,72 @@ sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.c
 
 ```
 
+```{r storing-colors-and-theme}
+# storing colors to use for species
+year2018_col <- "#9CB8D9"
+year2019_col <- "#779ECB"
+year2020_col <- "#5284BD"
+year2021_col <- "#3D6A9F"
+year2022_col <- "#2F527A"
+year2023_col <- "#03254c"
 
+# storing a ggplot theme (that will be used for all ggplots)
+theme_set(theme_minimal())
+```
 
 ## Problem 2. Data visualization
 
 **[A]**
 ```{r}
 
+wanted_years <- c("2018", "2019", "2020", "2021", "2022", "2023")
+
 sst_clean <- sst |> 
   mutate(
     year = factor(year(date)),  # extracting year and converting to factor
     month = factor(
       month(date, label = TRUE), # abbreviating month name
-      levels = month.abb,             # ordering months from Jan to Dec
-      ordered = TRUE
-    )
-  ) |> 
+      levels = month.abb, 
+      ordered = TRUE )) |> 
   select(-date) |> # removing original date column
+  filter(year %in% wanted_years) |>   # keep only the 6 years you want
+  mutate(year = factor(year, levels = wanted_years)  # recode factor AFTER filtering
+  ) |>
   group_by(year, month) |> 
   summarize(mean_monthly_sst = mean(temp, na.rm = TRUE), .groups = "drop") |> 
   ungroup()
 
+slice_sample(sst_clean, n = 5)
+str(sst_clean)
 
 ```
+**[B]**
 
+```{r}
+ggplot(data = sst_clean,
+       aes(x = month,
+           y = mean_monthly_sst,
+           color = as.factor(year),
+           group = year)) +
+  geom_point() +
+  geom_line() +
+  # labels
+  labs(x = "Month",
+       y = "Mean monthly sea surface temperature",
+       color = "Year") +
+  scale_color_manual(values = c(
+    "2018" = year2018_col,
+    "2019" = year2019_col,
+    "2020" = year2020_col,
+    "2021" = year2021_col,
+    "2022" = year2022_col,
+    "2023" = year2023_col
+    )) +
+  
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())
 
+```
 
