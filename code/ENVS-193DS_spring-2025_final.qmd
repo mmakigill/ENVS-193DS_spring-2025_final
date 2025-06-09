@@ -1,0 +1,43 @@
+---
+title: "ENVS-193DS_spring-2025_final"
+format: html
+---
+
+# Setting Up
+
+```{r}
+
+library(readr)
+library(tidyverse)
+library(dplyr)
+
+sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.csv")
+
+```
+
+
+
+## Problem 2. Data visualization
+
+**[A]**
+```{r}
+
+sst_clean <- sst |> 
+  mutate(
+    year = factor(year(date)),  # extracting year and converting to factor
+    month = factor(
+      month(date, label = TRUE), # abbreviating month name
+      levels = month.abb,             # ordering months from Jan to Dec
+      ordered = TRUE
+    )
+  ) |> 
+  select(-date) |> # removing original date column
+  group_by(year, month) |> 
+  summarize(mean_monthly_sst = mean(temp, na.rm = TRUE), .groups = "drop") |> 
+  ungroup()
+
+
+```
+
+
+
