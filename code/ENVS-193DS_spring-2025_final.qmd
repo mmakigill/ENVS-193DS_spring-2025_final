@@ -213,3 +213,27 @@ plot(model3)
 plot(model4) # 
 ```
 
+```{r}
+aic_table <- model.sel(model0, model1, model2, model3, model4)
+print(aic_table)
+```
+The best model as determined by Akaike’s Information Criterion (AIC) is model 2, including season and distance to forest edge with an AICc value of 226.3.
+
+
+
+## Problem 4. Affective and Exploratory Visualizations
+
+**[A]** 
+
+  My affective visualization has changed form as I have attempted to find the best way to communicate my data and it's implications. In homework 3 I started off with a more interpretive piece, unsure of how to fully communicate the technical pieces of my data and focused more on the impact of high water use per meal. In the final draft I kept the same sentiment but attempted to involve more of my data rather than just the meaning.
+  
+  What remained similar between each draft of visualization was the concept of plant health and height representing the average water footprint per meal type. They both visualized means and kept a focus on comparing categories in a way that would be accessible to both technical and non-technical audiences. Additionally, they all aimed to show relative differences rather than exact totals, with a dry environment and wilted plants on the left representing high water footprint meals and a healthy environment on the right with green plants. I also retained the same chart type of bar plots to clearly show differences in mean water footprint by meal type. 
+  
+  Since I used the mean water footprint per meal type for my visualization, as I collected more data the values for mean per each meal type changed. In the first visualization Carnivore meals and Omnivore meals had similar means, while Vegetarian and Pescatarian meals had similar means. As I collected more data on Carnivore meals, my resulting visualization depicted a trend with Carnivore meals having the highest mean water footprint and Vegetarian meals having the lowest water footprint. The additional data collected for Carnivore meals likely included meals with higher individual water footprints, which increased the overall average for that category. As the sample size grew, the means for each meal type became more representative of the actual water usage patterns associated with each diet.
+  
+  After attending section week 9, I received feedback on my piece that the message was very powerful  but it was hard to identify what exactly the data was representing. To address this issue I redesigned the concept and made the visuals more representative of my bar charts (on the same axis), while adding a gradient background of rain to explain water usage. I also added rainfall to symbolize water usage per meal type, while conveying the idea of wasted water and the sustainability implications of our dietary choices.These changes helped ground the metaphor in more concrete data, making the visualization more legible while preserving its emotional impact.
+
+
+
+
+
