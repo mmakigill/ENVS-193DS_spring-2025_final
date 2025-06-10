@@ -10,8 +10,13 @@ format: html
 library(readr)
 library(tidyverse)
 library(dplyr)
+library(DHARMa)
+library(MuMIn)
 
 sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.csv")
+
+
+nest_boxes <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/occdist.csv")
 
 ```
 
@@ -36,6 +41,11 @@ theme_set(theme_minimal())
 
 **[B]** The ANOVA test in part two includes a p-value of 0.02 and conclusion that there is no difference in means among the 5 sources. However to provide more context for the results they could also include a Cohen's d test to note the effect sizes, and individual group means with their standard errors. While the test concluded there is no significant difference among group means, the small p-value suggests that something is different. Including the effect sizes will tell the reader how different the relationships actually are and its relevance in a real world context i.e. urban land may be higher than grasslands. Providing the group means with standard errors will display how the sample means will vary and help to explain the lack of difference between means by accounting for precision.
 
+
+**[C1]** We rejected the null hypothesis that there is no correlation between distance from headwater (km) and annual total nitrogen load (kg year-1) (Pearson correlation test; r = correlation coefficient, p = 0.03, α = significance level, df = degrees of freedom).
+
+
+**[C2]** We rejected the null hypothesis that there is no difference in average nitrogen load (kg year-1) between sources (urban land, atmospheric deposition, fertilizer, wastewater treatment, and grasslands) (one-way ANOVA; F = test statistic, df = degrees of freedom, p = 0.02, α = significance level). Although the ANOVA test concludes no difference among means, the small p-value suggests potential differences in group means. (Effect sizes (Cohen’s d) of ___ and group means ____ with standard errors ____) assess the magnitude and variability of nitrogen load differences.
 
 
 
@@ -66,6 +76,9 @@ slice_sample(sst_clean, n = 5)
 str(sst_clean)
 
 ```
+
+
+
 **[B]**
 
 ```{r}
@@ -102,5 +115,101 @@ ggplot(data = sst_clean,
     legend.text = element_text(size = 10)
   )
 
+```
+
+
+## Problem 3. Data Analysis
+
+**[A] Response Variable**
+
+In this dataset the 1's and 0's are binary indicators for the presence of a specific species occupying a nest box. The number 1 indicates the species in present (swift parrot, common starling, tree martin, or empty), and the number 0 indicates the absence of the condition, i.e the species was not present (the nest box was occupied by another species or empty).
+
+**[B] Purpose of Study**
+
+In the study nest box occupancy is compared among three species. The main difference between species is that the Swift parrot is a target species for habitat restoration, while the Common starling and Tree martin are the parrots competitors (non-target species) and exploit the availability of the nest boxes.
+
+**[C] Difference in Seasons**
+
+In the study the author compares two years that are referred to as seasons, 2016 and 2019 which are the summer breeding seasons for Swift parrots and the only years that they were bred at the site. The 2019 season reflects long-term box availability. The 2016 season represents the initial creation and installation of nest boxes, while 2019 reflects three years of establishment and long term availability.
+
+
+**[D] Table of Models**
+
+4 models total:
+
+| Model number | Season | Distance to Forest Edge | Model Description                        |  
+|:------------:|:------:|:-----------------------:|------------------------------------------|  
+| 0            |        |                         | no predictors (null model)               |
+| 1            |  X     |       X                 | season, distance, and their interaction  | 
+| 2            |  X     |       X                 | season and distance only (no interaction)|   
+| 3            |  X     |                         | season                                   |    
+| 4            |        |       X                 | distance                                 |    
+
+
+
+**[E] Running the Models**
+
+```{r model-fitting}
+
+# Cleaning the data
+nestbox_clean <- nest_boxes |>
+  rename(edge_distance = `edge distance`) |>   # Rename column to avoid backticks
+  mutate(
+    season = as.factor(season),               # Convert season to factor
+    edge_distance = as.numeric(edge_distance)) |> # Ensure edge_distance is numeric
+  pivot_longer( # Convert species column to long format
+    cols = c(sp, cs, e, tm), # group species together in single column
+    names_to = "species",
+    values_to = "presence" # grouping binary indicators into one column
+  ) |>
+  filter(species == "sp")     
+
+
+# Model 0: Null model (no predictors)
+model0 <- glm(
+  presence ~ 1,
+  data = nestbox_clean,
+  family = binomial
+)
+
+# Model 1: Season, distance, and their interaction
+model1 <- glm(
+  presence ~ season * edge_distance,
+  data = nestbox_clean,
+  family = binomial
+)
+
+# Model 2: Season and distance only (no interaction)
+model2 <- glm(
+  presence ~ season + edge_distance,
+  data = nestbox_clean,
+  family = binomial
+)
+
+# Model 3: Season only
+model3 <- glm(
+  presence ~ season,
+  data = nestbox_clean,
+  family = binomial
+)
+
+# Model 4: Distance only
+model4 <- glm(
+  presence ~ edge_distance,
+  data = nestbox_clean,
+  family = binomial
+)
+
+```
+
+
+**[F]**
+
+```{r}
+par(mfrow = c(2,2))
+plot(model1)
+plot(model2)
+plot(model3)
+plot(model4) # 
 ```
 
