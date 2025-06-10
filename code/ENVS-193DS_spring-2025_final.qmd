@@ -1,27 +1,34 @@
 ---
 title: "ENVS-193DS_spring-2025_final"
-format: html
+author: "Marissa Maki Gill"
+date: today
+format: 
+  html:
+    toc: true # table of contents
+execute:
+  message: false # messages don't show up
+  warning: false # warnings don't show up
 ---
 
-# Setting Up
+## Setting Up
 
 ```{r}
-
+# Loading packages
 library(readr)
 library(tidyverse)
 library(dplyr)
 library(DHARMa)
 library(MuMIn)
 
-sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.csv")
+# Reading in the data
+sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.csv") # Nitrogen load data
 
-
-nest_boxes <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/occdist.csv")
+nest_boxes <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/occdist.csv") # Nest box habitat data
 
 ```
 
 ```{r storing-colors-and-theme}
-# storing colors to use for species
+# storing colors to use for years
 year2018_col <- "#9CB8D9"
 year2019_col <- "#779ECB"
 year2020_col <- "#5284BD"
@@ -29,7 +36,7 @@ year2021_col <- "#3D6A9F"
 year2022_col <- "#2F527A"
 year2023_col <- "#03254c"
 
-# storing a ggplot theme (that will be used for all ggplots)
+# storing a ggplot theme
 theme_set(theme_minimal())
 ```
 
@@ -55,25 +62,27 @@ theme_set(theme_minimal())
 **[A]**
 ```{r}
 
-wanted_years <- c("2018", "2019", "2020", "2021", "2022", "2023")
+wanted_years <- c("2018", "2019", "2020", "2021", "2022", "2023") # creating a character vector to store/select wanted years for analysis
 
+# Cleaning the data
 sst_clean <- sst |> 
   mutate(
-    year = factor(year(date)),  # extracting year and converting to factor
+    year = factor(year(date)),  # extracting year from date column and converting to factor
     month = factor(
-      month(date, label = TRUE), # abbreviating month name
-      levels = month.abb, 
-      ordered = TRUE )) |> 
+      month(date, label = TRUE), # extracting month from date column and abbreviating month name
+      levels = month.abb, # month order Jan to Dec
+      ordered = TRUE )) |> # orders month factor to plot
   select(-date) |> # removing original date column
-  filter(year %in% wanted_years) |>   # keep only the 6 years you want
-  mutate(year = factor(year, levels = wanted_years)  # recode factor AFTER filtering
+  filter(year %in% wanted_years) |>   # only including specified years
+  mutate(year = factor(year, levels = wanted_years)  # reorder factor levels
   ) |>
   group_by(year, month) |> 
-  summarize(mean_monthly_sst = mean(temp, na.rm = TRUE), .groups = "drop") |> 
-  ungroup()
+  summarize(mean_monthly_sst = mean(temp, na.rm = TRUE), # compute mean monthly sst and ignoring NA
+            .groups = "drop") |> # drops group structure
+  ungroup() # removing the group structure
 
-slice_sample(sst_clean, n = 5)
-str(sst_clean)
+slice_sample(sst_clean, n = 5) # viewing sample of 5 rows
+str(sst_clean) # viewing clean dataset structure
 
 ```
 
@@ -82,18 +91,19 @@ str(sst_clean)
 **[B]**
 
 ```{r}
-ggplot(data = sst_clean,
-       aes(x = month,
-           y = mean_monthly_sst,
-           color = as.factor(year),
-           group = year)) +
-  geom_point() +
-  geom_line() +
-  # labels
-  labs(x = "Month",
-       y = "Mean monthly sea surface temperature °C",
-       color = "Year") +
-  scale_color_manual(values = c(
+ggplot(data = sst_clean, # selecting the cleaned data
+       aes(x = month, # setting x-axis as month
+           y = mean_monthly_sst, # setting y-axis as mean sea surface temperature
+           color = as.factor(year), # setting color as points and lines by year
+           group = year)) + # each year is a group
+  geom_point() + # adding points for each data value
+  geom_line() + # connecting lines between each point
+  
+  # labeling the axis and legend
+  labs(x = "Month", # labeling the x-axis
+       y = "Mean monthly sea surface temperature °C", # labeling the y-axis
+       color = "Year") + # setting legend title
+  scale_color_manual(values = c( # manually defining colors for each year
     "2018" = year2018_col,
     "2019" = year2019_col,
     "2020" = year2020_col,
@@ -102,17 +112,17 @@ ggplot(data = sst_clean,
     "2023" = year2023_col
     )) +
   
-  theme_minimal() +
-  theme(
-    axis.title = element_text(size = 12),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_rect(fill = "white", color = "black"),
+  theme_minimal() + # using a clean minimal theme
+  theme( # customizing theme elements
+    axis.title = element_text(size = 12), # setting axis title size to 12
+    panel.grid.major = element_blank(), # removing panel major grid lines
+    panel.grid.minor = element_blank(), # removing panel minor grid lines
+    panel.background = element_rect(fill = "white", color = "black"), # setting a white background and black border
     
-    # Move legend inside the plot
-    legend.position = c(0.1, 0.7),  # adjust as needed
-    legend.title = element_text(size = 11, face = "bold"),
-    legend.text = element_text(size = 10)
+    # Repositioning the legend inside the plot
+    legend.position = c(0.1, 0.7),  # x and y position as proportions
+    legend.title = element_text(size = 13), # legend title font size
+    legend.text = element_text(size = 10) # legend item text size
   )
 
 ```
@@ -152,17 +162,17 @@ In the study the author compares two years that are referred to as seasons, 2016
 ```{r model-fitting}
 
 # Cleaning the data
-nestbox_clean <- nest_boxes |>
-  rename(edge_distance = `edge distance`) |>   # Rename column to avoid backticks
+nestbox_clean <- nest_boxes |> # selecting the original nest box data
+  rename(edge_distance = `edge distance`) |>  # renaming column to edge_distance
   mutate(
-    season = as.factor(season),               # Convert season to factor
-    edge_distance = as.numeric(edge_distance)) |> # Ensure edge_distance is numeric
-  pivot_longer( # Convert species column to long format
-    cols = c(sp, cs, e, tm), # group species together in single column
-    names_to = "species",
-    values_to = "presence" # grouping binary indicators into one column
+    season = as.factor(season),  # convert season to factor
+    edge_distance = as.numeric(edge_distance)) |> # edge_distance is numeric
+  pivot_longer( # reshape data to long format
+    cols = c(sp, cs, e, tm), # selecting columns of species
+    names_to = "species", # creating a new column to group species together
+    values_to = "presence" # grouping binary indicators into a new column
   ) |>
-  filter(species == "sp")     
+  filter(species == "sp") # keeping only rows with the swift parrot species    
 
 
 # Model 0: Null model (no predictors)
@@ -193,7 +203,7 @@ model3 <- glm(
   family = binomial
 )
 
-# Model 4: Distance only
+# Model 4: Edge distance only
 model4 <- glm(
   presence ~ edge_distance,
   data = nestbox_clean,
