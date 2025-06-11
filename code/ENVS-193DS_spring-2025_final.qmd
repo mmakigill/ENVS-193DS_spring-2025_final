@@ -10,6 +10,8 @@ execute:
   warning: false # warnings don't show up
 ---
 
+[Github Repository](https://github.com/mmakigill/ENVS-193DS_spring-2025_final.git)
+
 ## Setting Up
 
 ```{r}
