@@ -11,4 +11,4 @@ README.md	Project overview and structure.
 Homework_03.qmd	R code for answers, plots and summary statistics.
 
 ## Rendered output
-https://mmakigill.github.io/ENVS-193DS_spring-2025_final/code/ENVS-193DS_spring-2025_final.html 
+https://mmakigill.github.io/ENVS-193DS_spring-2025_final/code/ENVS-193DS_spring-2025_final.html  
