@@ -13,9 +13,6 @@ The published paper is: tojanovic, D., Owens, G., Young, C.M., Alves, F. and Hei
 
 ## Data and file information
 
-What files are there?
-
-Data and file information
 File structure:
 
 ```{r}
