@@ -2,7 +2,7 @@
 
 ## General Information
 
-This repository is for demonstrating fitting models with categorical and continuous predictors and model selection.
+This repository is for completion of the ENVS 193DS Spring 2025 Final by Marissa Maki Gill. It demonstrates fitting models with categorical and continuous predictors and model selection.
 
 The sst dataset is from: Kui, L. 2024. Daily sea surface temperature in Santa Barbara channel between 1982 and 2023 ver 3. Environmental Data Initiative. https://doi.org/10.6073/pasta/e930954949b2635928b8be6824630f84.
 
