@@ -159,7 +159,7 @@ In the study the author compares two years that are referred to as seasons, 2016
 
 **[E] Run the models**
 
-```{r model-fitting}
+```{r}
 
 # Cleaning the data
 nestbox_clean <- nest_boxes |> # selecting the original nest box data
@@ -176,29 +176,29 @@ nestbox_clean <- nest_boxes |> # selecting the original nest box data
 
 
 # Model 0: Null model (no predictors)
-model0 <- glm(
-  sp ~ 1,
-  data = nestbox_clean,
-  family = binomial
+model0 <- glm( # creating a generalized linear model
+  sp ~ 1, # response variable and intercept
+  data = nestbox_clean, # using clean nest box dataset
+  family = binomial # binomial distribution for the response
 )
 
 # Model 1: Saturated model (season and distance)
 model1 <- glm(
-  sp ~ edge_distance + season,
+  sp ~ edge_distance + season, # combined effects of predictors
   data = nestbox_clean,
   family = binomial
 )
 
 # Model 2: Season only
 model2 <- glm(
-  sp ~ season,
+  sp ~ season, # only the season predictor
   data = nestbox_clean,
   family = binomial
 )
 
 # Model 3: Edge distance only
 model3 <- glm(
-  sp ~ edge_distance,
+  sp ~ edge_distance, # only the edge distance predictor
   data = nestbox_clean,
   family = binomial
 )
@@ -225,44 +225,47 @@ AICc(model0,
      model3)|> # arranging output in descending order of AIC
   
   arrange(AICc) # comparing all models with (AIC)
+```
+The best model as determined by Akaike’s Information Criterion (AIC) is the saturated model, including season and distance to forest edge with an AICc value of 226.3.
 
+```{r}
 # Viewing model summary
 summary(model1)
 ```
-The best model as determined by Akaike’s Information Criterion (AIC) is the saturated model, including season and distance to forest edge with an AICc value of 226.3.
+
 
 
 **[H] Visualize the model predictions**
 
 ```{r}
-model1_predictions <- ggpredict(
+model1_predictions <- ggpredict( # generating predicted values from the logistic regression model1
   model1, # model object
-  terms = c("edge_distance [all]", "season") # predictors
+  terms = c("edge_distance [all]", # numerical predictor
+            "season") # categorical predictor
 ) |> 
-  # treating this like a regular data frame
-  # renaming the columns
-  rename(edge_distance = x,
+  rename(edge_distance = x, # renaming the columns
          season = group)
-model1_predictions$season <- as.character(model1_predictions$season)
+model1_predictions$season <- as.character(model1_predictions$season) # convert column from factor to character
 
 ```
 
 ```{r}
-#| fig-width: 12
-#| fig-height: 4
+#| fig-width: 12 # setting figure width
+#| fig-height: 4 # setting figure height
 
 # base layer: ggplot
-# using the drought_exp_clean object
-ggplot(data = nestbox_clean,
-       aes(x = edge_distance,
-           y = sp,
-           color = season)) +
+ggplot(data = nestbox_clean, # selecting clean nest box data
+       aes(x = edge_distance, # setting the x-axis
+           y = sp, # setting the y-axis
+           color = season)) + # color points by season
+
   # first layer: jitter showing individual observations
   geom_jitter(width = 0.1,
               height = 0,
               shape = 21,
               alpha = 0.6) +
-  # second layer: point range showing model predictions
+
+  # second layer: ribbon showing model predictions
   geom_ribbon(data = model1_predictions,
               aes(x = edge_distance,
                   ymin = conf.low,
@@ -271,39 +274,71 @@ ggplot(data = nestbox_clean,
                   group = season),
               alpha = 0.2,
               inherit.aes = FALSE) +
-  # Model prediction line
-  geom_line(data = model1_predictions,
-            aes(x = edge_distance,
-                y = predicted,
-                color = season,
-                group = season),
-            size = 1.2,
-            inherit.aes = FALSE) +
-  # manually setting colors
+ 
+  # adding model prediction lines
+  geom_line(data = model1_predictions, # using model1 predictions
+            aes(x = edge_distance, # x-axis
+                y = predicted, # y-axis (probability)
+                color = season, group = season), # line and group color by season
+            size = 1.2, # line thickness
+            inherit.aes = FALSE) + # avoid main aesthetics
+ 
+  # manually setting colors for seasons
   scale_color_manual(values = c("2016" = "steelblue", "2019" = "darkred")) +
   scale_fill_manual(values = c("2016" = "steelblue", "2019" = "darkred")) +
+  
   # wrapping x-axis labels
   scale_x_discrete(labels = label_wrap(width = 10)) +
+  
   # creating different panels for each species
   facet_wrap(~season, nrow = 1) +
+  
   # labeling x- and y-axis
   labs(x = "Distance from Forest Edge (m)",
        y = "Swift Parrot Presence") +
-  # taking out the legend
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "none",
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
+  
+  theme_minimal(base_size = 14) + # minimal theme
+  theme(  # custom theming
+    legend.position = "none", # remove color legend
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank() # remove major and minor gridlines
   )
 ```
-
-
-
-**[I]**
+**Figure 1.** Swift Parrot Presence Probability by Distance from Forest Edge and Season.
+This figure shows observed Swift Parrot presence plotted against distance from the forest edge, separated by season (2016 and 2019). Jittered points represent individual occupancy observations from nest boxes. Predicted probabilities of Swift Parrot presence from a logistic regression model (model1) are overlaid with a 95% confidence intervals. The predictions illustrate how the likelihood of Swift Parrot presence varies with edge distance between seasons. 
 
 
 **[J] Calculate model predictions**
+
+```{r}
+
+# creating a new data frame with prediction points (0m and 900m from forest edge)
+probability_data <- expand.grid(  # all combinations of edge_distance and season
+  edge_distance = c(0, 900), # predictor values
+  season = c("2016", "2019")  # seasons
+)
+
+# predicted probabilities and standard errors
+predictions <- predict(   # model predictions
+  model1,  # logistic regression model
+  newdata = probability_data, # predict for each row of probability_data
+  type = "response", # output on probability scale
+  se.fit = TRUE   # standard errors for each prediction
+)
+
+probability_data$predicted_prob <- predictions$fit  # adding predicted probabilities to data frame
+probability_data$se <- predictions$se.fit  # adding CI of predictions to data frame
+
+# calculating 95% confidence intervals
+probability_data$lower_CI <- plogis(  # lower CI
+  qlogis(probability_data$predicted_prob) - 1.96 * probability_data$se
+)
+probability_data$upper_CI <- plogis(  # upper CI
+  qlogis(probability_data$predicted_prob) + 1.96 * probability_data$se
+)
+
+print(probability_data)   # printing prediction results
+
+```
 
 
 **[K] **
