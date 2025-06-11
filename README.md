@@ -22,9 +22,8 @@ File structure:
 ├── ENVS-193DS_spring-2025_final.Rproj
 ├── README.md
 ├── code                                            # code folder
-│   ├── workshop-08_code_KEY.Rmd                    
-│   ├── workshop-08_code_KEY.html         
-│ 
+│   ├── ENVS-193DS_spring-2025_final.html                  
+│   └── ENVS-193DS_spring-2025_final.qmd     
 └── data                                            # data folder
     └── Valliere_etal_EcoApps_Data.xlsx
 
