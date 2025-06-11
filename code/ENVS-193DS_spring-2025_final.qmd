@@ -14,11 +14,12 @@ execute:
 
 ```{r}
 # Loading packages
-library(readr)
 library(tidyverse)
-library(dplyr)
 library(DHARMa)
 library(MuMIn)
+library(here)
+library(ggeffects)
+library(scales)
 
 # Reading in the data
 sst <- read_csv("/home/jovyan/ENVS-193DS_spring-2025_final/data/SST_update2023.csv") # Nitrogen load data
@@ -169,42 +170,35 @@ nestbox_clean <- nest_boxes |> # selecting the original nest box data
   pivot_longer( # reshape data to long format
     cols = c(sp, cs, e, tm), # selecting columns of species
     names_to = "species", # creating a new column to group species together
-    values_to = "presence" # grouping binary indicators into a new column
+    values_to = "sp" # grouping binary indicators into a new column
   ) |>
   filter(species == "sp") # keeping only rows with the swift parrot species    
 
 
 # Model 0: Null model (no predictors)
 model0 <- glm(
-  presence ~ 1,
+  sp ~ 1,
   data = nestbox_clean,
   family = binomial
 )
 
-# Model 1: Season, distance, and their interaction
+# Model 1: Saturated model (season and distance)
 model1 <- glm(
-  presence ~ season * edge_distance,
+  sp ~ edge_distance + season,
   data = nestbox_clean,
   family = binomial
 )
 
-# Model 2: Season and distance only (no interaction)
+# Model 2: Season only
 model2 <- glm(
-  presence ~ season + edge_distance,
+  sp ~ season,
   data = nestbox_clean,
   family = binomial
 )
 
-# Model 3: Season only
+# Model 3: Edge distance only
 model3 <- glm(
-  presence ~ season,
-  data = nestbox_clean,
-  family = binomial
-)
-
-# Model 4: Edge distance only
-model4 <- glm(
-  presence ~ edge_distance,
+  sp ~ edge_distance,
   data = nestbox_clean,
   family = binomial
 )
@@ -216,22 +210,95 @@ model4 <- glm(
 
 ```{r}
 par(mfrow = c(2,2)) # setting up plot window to show 4 plots
-plot(model1) # generating diagnostics plots for each model
+plot(model0) # generating diagnostics plots for each model
+plot(model1)
 plot(model2)
 plot(model3)
-plot(model4)  
 ```
 
 **[G] Select the Best Model**
 
 ```{r}
-aic_table <- model.sel(model0, model1, model2, model3, model4) # comparing all models with (AIC)
+AICc(model0,
+     model1, # best model: season and distance to forest edge
+     model2,
+     model3)|> # arranging output in descending order of AIC
+  
+  arrange(AICc) # comparing all models with (AIC)
 
-print(aic_table) # displaying model comparison table
+# Viewing model summary
+summary(model1)
 ```
-The best model as determined by Akaike’s Information Criterion (AIC) includes season and distance to forest edge with an AICc value of 226.3.
+The best model as determined by Akaike’s Information Criterion (AIC) is the saturated model, including season and distance to forest edge with an AICc value of 226.3.
+
 
 **[H] Visualize the model predictions**
+
+```{r}
+model1_predictions <- ggpredict(
+  model1, # model object
+  terms = c("edge_distance [all]", "season") # predictors
+) |> 
+  # treating this like a regular data frame
+  # renaming the columns
+  rename(edge_distance = x,
+         season = group)
+model1_predictions$season <- as.character(model1_predictions$season)
+
+```
+
+```{r}
+#| fig-width: 12
+#| fig-height: 4
+
+# base layer: ggplot
+# using the drought_exp_clean object
+ggplot(data = nestbox_clean,
+       aes(x = edge_distance,
+           y = sp,
+           color = season)) +
+  # first layer: jitter showing individual observations
+  geom_jitter(width = 0.1,
+              height = 0,
+              shape = 21,
+              alpha = 0.6) +
+  # second layer: point range showing model predictions
+  geom_ribbon(data = model1_predictions,
+              aes(x = edge_distance,
+                  ymin = conf.low,
+                  ymax = conf.high,
+                  fill = season,
+                  group = season),
+              alpha = 0.2,
+              inherit.aes = FALSE) +
+  # Model prediction line
+  geom_line(data = model1_predictions,
+            aes(x = edge_distance,
+                y = predicted,
+                color = season,
+                group = season),
+            size = 1.2,
+            inherit.aes = FALSE) +
+  # manually setting colors
+  scale_color_manual(values = c("2016" = "steelblue", "2019" = "darkred")) +
+  scale_fill_manual(values = c("2016" = "steelblue", "2019" = "darkred")) +
+  # wrapping x-axis labels
+  scale_x_discrete(labels = label_wrap(width = 10)) +
+  # creating different panels for each species
+  facet_wrap(~season, nrow = 1) +
+  # labeling x- and y-axis
+  labs(x = "Distance from Forest Edge (m)",
+       y = "Swift Parrot Presence") +
+  # taking out the legend
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
 
 **[I]**
 
