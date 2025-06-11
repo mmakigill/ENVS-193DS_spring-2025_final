@@ -102,7 +102,7 @@ ggplot(data = sst_clean, # selecting the cleaned data
   
   # labeling the axis and legend
   labs(x = "Month", # labeling the x-axis
-       y = "Mean monthly sea surface temperature °C", # labeling the y-axis
+       y = "Mean monthly sea surface temperature (°C)", # labeling the y-axis
        color = "Year") + # setting legend title
   scale_color_manual(values = c( # manually defining colors for each year
     "2018" = year2018_col,
@@ -226,7 +226,7 @@ AICc(model0,
   
   arrange(AICc) # comparing all models with (AIC)
 ```
-The best model as determined by Akaike’s Information Criterion (AIC) is the saturated model, including season and distance to forest edge with an AICc value of 226.3.
+The best model as determined by Akaike’s Information Criterion (AIC) is the saturated model, including season and distance to forest edge.
 
 ```{r}
 # Viewing model summary
@@ -245,6 +245,7 @@ model1_predictions <- ggpredict( # generating predicted values from the logistic
 ) |> 
   rename(edge_distance = x, # renaming the columns
          season = group)
+
 model1_predictions$season <- as.character(model1_predictions$season) # convert column from factor to character
 
 ```
@@ -280,8 +281,7 @@ ggplot(data = nestbox_clean, # selecting clean nest box data
             aes(x = edge_distance, # x-axis
                 y = predicted, # y-axis (probability)
                 color = season, group = season), # line and group color by season
-            size = 1.2, # line thickness
-            inherit.aes = FALSE) + # avoid main aesthetics
+            size = 1.2) + # line thickness
  
   # manually setting colors for seasons
   scale_color_manual(values = c("2016" = "steelblue", "2019" = "darkred")) +
@@ -295,7 +295,7 @@ ggplot(data = nestbox_clean, # selecting clean nest box data
   
   # labeling x- and y-axis
   labs(x = "Distance from Forest Edge (m)",
-       y = "Swift Parrot Presence") +
+       y = "Probability of Swift Parrot Occupying Nest Boxes") +
   
   theme_minimal(base_size = 14) + # minimal theme
   theme(  # custom theming
@@ -304,44 +304,26 @@ ggplot(data = nestbox_clean, # selecting clean nest box data
   )
 ```
 **Figure 1.** Swift Parrot Presence Probability by Distance from Forest Edge and Season.
-This figure shows observed Swift Parrot presence plotted against distance from the forest edge, separated by season (2016 and 2019). Jittered points represent individual occupancy observations from nest boxes. Predicted probabilities of Swift Parrot presence from a logistic regression model (model1) are overlaid with a 95% confidence intervals. The predictions illustrate how the likelihood of Swift Parrot presence varies with edge distance between seasons. 
+This figure shows observed Swift Parrot presence plotted against distance from the forest edge, separated by season (2016 and 2019). Jittered points represent individual occupancy observations from nest boxes. Predicted probabilities of Swift Parrot presence from a logistic regression model (model1) are overlaid with a 95% confidence interval. The predictions illustrate how the likelihood of Swift Parrot presence varies with edge distance between seasons. 
 
 
 **[J] Calculate model predictions**
 
 ```{r}
 
-# creating a new data frame with prediction points (0m and 900m from forest edge)
-probability_data <- expand.grid(  # all combinations of edge_distance and season
-  edge_distance = c(0, 900), # predictor values
-  season = c("2016", "2019")  # seasons
+sp_prediction <- ggpredict( 
+  model1, # using model1 to predict values
+  terms = c("edge_distance [0,900]", "season") # selecting edge distance at 0 and 900, and seasons
 )
-
-# predicted probabilities and standard errors
-predictions <- predict(   # model predictions
-  model1,  # logistic regression model
-  newdata = probability_data, # predict for each row of probability_data
-  type = "response", # output on probability scale
-  se.fit = TRUE   # standard errors for each prediction
-)
-
-probability_data$predicted_prob <- predictions$fit  # adding predicted probabilities to data frame
-probability_data$se <- predictions$se.fit  # adding CI of predictions to data frame
-
-# calculating 95% confidence intervals
-probability_data$lower_CI <- plogis(  # lower CI
-  qlogis(probability_data$predicted_prob) - 1.96 * probability_data$se
-)
-probability_data$upper_CI <- plogis(  # upper CI
-  qlogis(probability_data$predicted_prob) + 1.96 * probability_data$se
-)
-
-print(probability_data)   # printing prediction results
+print(sp_prediction) # printing the results
 
 ```
 
 
-**[K] **
+**[K] Interpreting results**
+
+We found a significant effect of both season and distance from forest edge on Swift parrot nest box occupancy (z = -3.34 for distance, p < 0.001; z = -2.30 for season, p = 0.0215, α = 0.05). As distance from the forest edge increased occupancy declined and was lower in 2019 than in the 2016 season [Figure 1]. The predicted probability of occupancy at 0 m was 48% in 2016 and 30% in 2019, while at 900 m it dropped to 12% and 6%, respectively [Figure 1]. These results align with the results in the study where Tree martins increased their occupancy of nest boxes as distance from the forest edge decreased. This suggests Swift Parrots prefer nesting near forest edges, potentially due to lacking resources or reduced competition with Tree martins and that nest box placement may be benefiting non-target species depending on their habitat preferences. 
+
 
 
 ## Problem 4. Affective and Exploratory Visualizations
